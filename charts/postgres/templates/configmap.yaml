@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "postgres.fullname" . }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+data:
+  POSTGRES_USER: {{ .Values.auth.username | quote }}
+  POSTGRES_DB: {{ .Values.auth.database | quote }}
+  # subdir keeps initdb happy on a freshly-provisioned volume
+  PGDATA: /var/lib/postgresql/data/pgdata

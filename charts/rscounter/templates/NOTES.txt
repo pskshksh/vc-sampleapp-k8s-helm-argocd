@@ -1,0 +1,2 @@
+rscounter deployed. In-cluster: http://rscounter:8081  (probes: /livez, /readyz)
+DATABASE_URL is read from the pre-existing Secret vc-sampleapp-db (key: DATABASE_URL).

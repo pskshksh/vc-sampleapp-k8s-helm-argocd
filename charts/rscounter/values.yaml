@@ -1,0 +1,114 @@
+component: counter
+replicaCount: 1
+
+image:
+  registry: ""          # e.g. 127.0.0.1:30082/docker-local; empty => repository is the full ref
+  repository: rscounter
+  tag: dev
+  digest: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  automount: false
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001                   # matches the Dockerfile's appuser
+  runAsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+service:
+  type: ClusterIP
+  port: 8081
+  targetPort: 8081
+
+config:
+  RSCOUNTER_ADDR: "0.0.0.0:8081"
+  RUST_LOG: "info,sqlx=warn"
+
+# DATABASE_URL is secret. The chart does NOT create it — it references a
+# pre-existing Secret (provisioned by the master-key flow / ESO, see docs §5).
+secretEnv:
+  - name: DATABASE_URL           # env var in the container
+    secretName: vc-sampleapp-db  # name of the existing Secret
+    secretKey: DATABASE_URL      # key within it
+
+resources:
+  requests: { cpu: 25m, memory: 32Mi }
+  limits:   { cpu: 250m, memory: 64Mi }
+
+probes:
+  liveness:  { path: /livez,  port: 8081 }
+  readiness: { path: /readyz, port: 8081 }
+  startup:                            # covers boot-time schema init against Postgres
+    enabled: true
+    path: /livez
+    port: 8081
+    failureThreshold: 30
+    periodSeconds: 2
+
+terminationGracePeriodSeconds: 30
+topologySpreadConstraints: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 0
+  behavior: {}
+
+pdb:
+  enabled: false
+  minAvailable: ""
+  maxUnavailable: 1
+
+ingress:                 # rscounter stays internal — never expose it
+  enabled: false
+  className: nginx
+  annotations: {}
+  hosts: []
+  tls: []
+
+# read-only rootfs needs a writable scratch dir
+volumes:
+  - name: tmp
+    emptyDir: {}
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
+networkPolicy:
+  enabled: true
+  ingressFrom:                        # only goapi may call rscounter
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: goapi
+  egressTo:                           # rscounter may reach Postgres
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - port: 5432
+          protocol: TCP
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

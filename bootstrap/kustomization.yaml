@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# App-namespace prerequisites: the vc-sampleapp namespace (PSA restricted) plus
+# the shared storage layer. Applied by `make bootstrap`.
+# (The registry uses `make storage` — just the storage base — since it runs in
+# its own namespace.)
+
+resources:
+  - namespace.yaml
+  - storage

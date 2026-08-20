@@ -1,0 +1,5 @@
+apiVersion: v2
+name: postgres
+description: Postgres for vc-sampleapp (in-cluster; swap for a managed DB in prod)
+version: 0.1.0
+appVersion: "18"

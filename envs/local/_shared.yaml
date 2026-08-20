@@ -1,0 +1,8 @@
+# Shared across the app services (js, goapi, rscounter) for LOCAL.
+# Images are pulled from the in-cluster registry exposed on the node at
+# localhost:30082, repo prefix `docker-local`. The image TAG (version) is
+# injected by the Makefile from the VERSION file. No pull secret — the local
+# registry is anonymous.
+image:
+  registry: "127.0.0.1:30082/docker-local"   # 127.0.0.1 avoids the localhost->IPv6 issue
+  pullPolicy: IfNotPresent

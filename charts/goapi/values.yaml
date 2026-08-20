@@ -1,0 +1,103 @@
+component: api
+replicaCount: 1
+
+image:
+  registry: ""          # e.g. 127.0.0.1:30082/docker-local; empty => repository is the full ref
+  repository: goapi
+  tag: dev
+  digest: ""            # set in stage to pin by digest (wins over tag)
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: [ ]
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: { }
+  automount: false
+
+podAnnotations: { }
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true      # distroless static binary — fine
+  capabilities:
+    drop: [ "ALL" ]
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+# non-secret env -> ConfigMap (envFrom)
+config:
+  GOAPI_ADDR: ":8080"
+  RSCOUNTER_URL: "http://rscounter:8081"
+  RSCOUNTER_TIMEOUT: "5s"
+  LOG_LEVEL: "info"
+
+# goapi has no secrets
+secretEnv: [ ]
+
+resources:
+  requests: { cpu: 25m, memory: 32Mi }
+  limits: { cpu: 250m, memory: 64Mi }
+
+probes:
+  liveness: { path: /livez,  port: 8080 }
+  readiness: { path: /readyz, port: 8080 }
+  startup: { enabled: false }
+
+terminationGracePeriodSeconds: 30
+topologySpreadConstraints: [ ]
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 0   # 0 = don't scale on memory
+  behavior: { }
+
+pdb:
+  enabled: false
+  minAvailable: ""       # e.g. 1  (leave empty to use maxUnavailable)
+  maxUnavailable: 1
+
+ingress: # goapi stays internal — never expose it
+  enabled: false
+  className: nginx
+  annotations: { }
+  hosts: [ ]
+  tls: [ ]
+
+volumes: [ ]
+volumeMounts: [ ]
+
+networkPolicy:
+  enabled: true
+  ingressFrom: # only js may call goapi
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: js
+  egressTo: # goapi may call rscounter
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: rscounter
+      ports:
+        - port: 8081
+          protocol: TCP
+
+nodeSelector: { }
+tolerations: [ ]
+affinity: { }

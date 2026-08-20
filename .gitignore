@@ -1,0 +1,67 @@
+# =============================================================================
+# Secrets & credentials — NEVER commit
+# =============================================================================
+# local symmetric master key
+secrets/master.key
+# plaintext Secret manifests (only the *.enc ciphertext is committed)
+envs/**/secrets/*.secret.yaml
+!envs/**/secrets/*.secret.example.yaml
+# decrypted / temporary secret output
+*.dec.yaml
+*.plain.yaml
+# key material of any kind
+*.key
+*.pem
+*.p12
+*.pfx
+age*.key
+keys.txt
+# kubeconfigs (may embed tokens/certs)
+kubeconfig
+*.kubeconfig
+.kube/
+# environment files
+.env
+.env.*
+!.env.example
+
+# =============================================================================
+# Helm
+# =============================================================================
+# vendored dependency charts pulled by `helm dependency build`
+charts/*/charts/
+charts/*/Chart.lock
+# packaged charts
+*.tgz
+
+# =============================================================================
+# OS
+# =============================================================================
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# =============================================================================
+# Editors / IDEs
+# =============================================================================
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+.claude/settings.local.json
+
+# =============================================================================
+# Logs & temp
+# =============================================================================
+*.log
+*.tmp
+tmp/
+
+# =============================================================================
+# Project docs (kept local by choice)
+# =============================================================================
+/docs/

@@ -1,0 +1,108 @@
+component: web
+replicaCount: 1
+
+image:
+  registry: ""          # e.g. 127.0.0.1:30082/docker-local; empty => repository is the full ref
+  repository: webapp
+  tag: dev
+  digest: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  automount: false
+
+podAnnotations: {}
+
+# ⚠️ The js image currently runs as ROOT (see js/Dockerfile). The hardened
+# defaults below assume a non-root rebuild. If the pod crashes on startup,
+# EITHER rebuild the image non-root (recommended) OR temporarily set
+# runAsNonRoot:false and remove runAsUser here.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+
+config:
+  GOAPI_URL: "http://goapi:8080"
+
+# js has no secrets
+secretEnv: []
+
+resources:
+  requests: { cpu: 25m, memory: 64Mi }
+  limits:   { cpu: 250m, memory: 128Mi }
+
+probes:                               # SPA index answers / ; no dedicated endpoint
+  liveness:  { path: /, port: 3000 }
+  readiness: { path: /, port: 3000 }
+  startup:   { enabled: false }
+
+terminationGracePeriodSeconds: 30
+topologySpreadConstraints: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 0
+  behavior: {}
+
+pdb:
+  enabled: false
+  minAvailable: ""
+  maxUnavailable: 1
+
+ingress:                 # the only public-facing service (enable in stage)
+  enabled: false
+  className: nginx
+  annotations: {}
+  hosts: []
+  tls: []
+
+# Node/Rsbuild may write temp files; give it a writable /tmp under read-only rootfs
+volumes:
+  - name: tmp
+    emptyDir: {}
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
+networkPolicy:
+  enabled: true
+  # ingress left empty for local (kubectl port-forward is not pod traffic and
+  # still works). In stage, allow the ingress controller — see envs/stage/js.yaml.
+  ingressFrom: []
+  egressTo:                           # js proxies /api to goapi
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: goapi
+      ports:
+        - port: 8080
+          protocol: TCP
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

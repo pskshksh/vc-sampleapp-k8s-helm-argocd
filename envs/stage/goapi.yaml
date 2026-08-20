@@ -1,0 +1,25 @@
+replicaCount: 2
+image:
+  repository: ghcr.io/pskshksh/goapi
+  digest: "sha256:REPLACE_ME"     # CI bumps this to the promoted digest
+  tag: ""
+  pullPolicy: IfNotPresent
+config: { LOG_LEVEL: info }
+resources:
+  requests: { cpu: 100m, memory: 64Mi }
+  limits:   { cpu: 500m, memory: 128Mi }
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+pdb:
+  enabled: true
+  minAvailable: 1
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: goapi

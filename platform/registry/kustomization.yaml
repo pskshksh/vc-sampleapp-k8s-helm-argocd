@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Lightweight local Docker registry. Applied by `make registry`.
+resources:
+  - namespace.yaml
+  - registry.yaml
+  - registry-ui.yaml

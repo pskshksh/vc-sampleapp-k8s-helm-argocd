@@ -1,0 +1,53 @@
+image:
+  registry: ""          # empty => pulls postgres from Docker Hub; set a registry prefix to mirror it
+  repository: postgres
+  tag: "18-alpine"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []    # e.g. [{ name: registry-cred }] when the registry is private
+
+nameOverride: ""
+fullnameOverride: ""       # chart name is already "postgres" -> stable DNS
+
+auth:
+  username: rscounter
+  database: rscounter
+  # POSTGRES_PASSWORD is referenced from a pre-existing Secret; the chart never
+  # holds the value. Same Secret rscounter reads DATABASE_URL from -> one source
+  # of truth for the password.
+  existingSecret: vc-sampleapp-db
+  passwordKey: password
+
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClass: ""         # "" = cluster default
+
+service:
+  port: 5432
+
+resources:
+  requests: { cpu: 50m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 256Mi }
+
+# postgres:*-alpine runs as uid/gid 70
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 70
+  runAsGroup: 70
+  fsGroup: 70
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false   # Postgres writes runtime files on the rootfs
+  capabilities:
+    drop: ["ALL"]
+
+networkPolicy:
+  enabled: true
+  ingressFrom:                    # ONLY rscounter may reach the database
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rscounter

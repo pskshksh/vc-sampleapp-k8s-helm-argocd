@@ -1,0 +1,2 @@
+js deployed. Port-forward to view:
+  kubectl -n vc-sampleapp port-forward svc/js 3000:3000  ->  http://localhost:3000

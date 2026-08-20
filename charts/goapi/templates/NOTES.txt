@@ -1,0 +1,2 @@
+goapi deployed. In-cluster: http://goapi:8080  (probes: /livez, /readyz)
+It proxies to rscounter at {{ .Values.config.RSCOUNTER_URL }}.

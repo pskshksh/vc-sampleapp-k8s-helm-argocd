@@ -1,0 +1,4 @@
+# Shared across the app services for STAGE. Stage images use a full repository
+# path (ghcr.io/...) set per-service, so no `image.registry` prefix is needed.
+imagePullSecrets:
+  - name: registry-cred     # remove if the stage image registry is public

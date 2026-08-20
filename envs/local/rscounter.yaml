@@ -1,0 +1,1 @@
+config: { RUST_LOG: "debug,sqlx=info" }

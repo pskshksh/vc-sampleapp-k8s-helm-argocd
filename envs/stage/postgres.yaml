@@ -1,0 +1,6 @@
+persistence:
+  size: 10Gi
+  storageClass: ""                # set to your stage StorageClass
+resources:
+  requests: { cpu: 250m, memory: 256Mi }
+  limits:   { cpu: "1",  memory: 512Mi }
